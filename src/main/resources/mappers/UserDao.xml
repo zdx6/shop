@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zdx.shop.dao.UserDao">
+	<resultMap type="user" id="rsmap">
+		<id property="id" column="id" />
+		<result property="createTime" column="create_time" />
+		<result property="loginTime" column="login_time" />
+		<result property="loginName" column="login_name" />
+		<result property="password" column="password" />
+		<result property="nickName" column="nick_name" />
+		<result property="phone" column="phone" />
+		<result property="money" column="money" />
+		<result property="state" column="state" />
+	</resultMap>
+	<sql id="column_list">
+		id,login_name,nick_name,phone,money
+	</sql>
+	<sql id="queryUserListWhere">
+		<where>
+			<if test="loginName!=null">
+				and login_name like "%"#{loginName}"%"
+			</if>
+			<if test="nickName!=null">
+				and and nick_name like "%"#{nickName}"%"
+			</if>
+			<if test="phone!=null">
+				and phone=#{phone}
+			</if>
+		</where>
+	</sql>
+	<select id="login" resultMap="rsmap" parameterType="String">
+		SELECT
+		<include refid="column_list"></include>
+		FROM user
+		WHERE
+		login_name=#{login_name}
+		AND
+		password=#{password}
+		AND
+		state=0	<!-- 0=可登陆，1=不可登陆 -->
+	</select>
+	<update id="updateLoginTime" parameterType="int">
+		UPDATE user
+		SET
+		login_time=NOW()
+		WHERE
+		id=#{id}
+	</update>
+	<select id="queryById" resultMap="rsmap" parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM user
+		WHERE
+		id=#{id}
+	</select>
+	<select id="queryUserList" resultMap="rsmap" parameterType="user">
+		SELECT
+		<include refid="column_list"></include>
+		FROM user
+		<include refid="queryUserListWhere"></include>
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	<select id="selectUserListCount" resultType="int" parameterType="user">
+		SELECT
+		COUNT(*)
+		FROM user
+		<include refid="queryUserListWhere"></include>
+	</select>
+	<insert id="insertUser" parameterType="user">
+		INSERT INTO user(
+		create_time,
+		update_time,
+		login_time,
+		login_name,
+		password,
+		nick_name,
+		phone
+		)
+		VALUES(
+		NOW(),
+		NOW(),
+		NOW(),
+		#{loginName},
+		#{password},
+		#{nickName},
+		#{phone}
+		)
+	</insert>
+	<update id="updateUser" parameterType="user">
+		UPDATE user SET
+		update_time=NOW()
+		<trim prefix=" " prefixOverrides=",">
+			<if test="password!=null">
+				,password=#{password}
+			</if>
+			<if test="nickName!=null">
+				,nick_name=#{nickName}
+			</if>
+			<if test="phone!=null">
+				,phone=#{phone}
+			</if>
+		</trim>
+		WHERE
+		id=#{id}
+	</update>
+	<update id="deleteUser" parameterType="int">
+		UPDATE user SET state=-1 WHERE id=#{id}
+	</update>
+	<update id="reduceMoney" parameterType="map">
+		UPDATE user SET
+		money=money-#{num}
+		WHERE
+		id=#{id} and money>=#{num}
+	</update>
+	<update id="increaseMoney" parameterType="map">
+		UPDATE user SET
+		money=money+#{num}
+		WHERE
+		id=#{id}
+	</update>
+</mapper>

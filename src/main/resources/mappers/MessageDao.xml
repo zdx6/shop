@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zdx.shop.dao.MessageDao">
+	<resultMap type="message" id="rsmap">
+		<id property="id" column="id" />
+		<result property="userId" column="user_id" />
+		<result property="shopId" column="shop_id" />
+		<result property="type" column="type" />
+		<result property="content" column="content" />
+		<result property="sendTime" column="send_time" />
+		<result property="state" column="state" />
+		<association property="user" javaType="user">
+			<result property="loginName" column="user_login_name" />
+			<result property="nickName" column="nick_name" />
+		</association>
+		<association property="shop" javaType="shop">
+			<result property="loginName" column="shop_login_name" />
+			<result property="shopName" column="shop_name" />
+		</association>
+	</resultMap>
+	<sql id="column_list">
+		m.id,user_id,shop_id,type,content,send_time,state,
+		u.login_name user_login_name,nick_name,
+		s.login_name
+		shop_login_name,shop_name
+	</sql>
+	<select id="queryById" resultMap="rsmap" parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM message m
+		LEFT JOIN user u ON
+		m.user_id=u.id
+		LEFT JOIN shop s ON
+		m.shop_id=s.id
+		WHERE id=#{id}
+	</select>
+	<select id="queryUserMessageList" resultMap="rsmap"
+		parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM message m
+		LEFT JOIN user u ON
+		m.user_id=u.id
+		LEFT JOIN shop s ON
+		m.shop_id=s.id
+		WHERE user_id=#{userId}
+		ORDER BY send_time DESC
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	<select id="queryShopMessageList" resultMap="rsmap"
+		parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM message m
+		LEFT JOIN user u ON
+		m.user_id=u.id
+		LEFT JOIN shop s ON
+		m.shop_id=s.id
+		WHERE shop_id=#{shopId}
+		ORDER BY send_time DESC
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	<select id="selectUserMessageListCount" resultType="int"
+		parameterType="int">
+		SELECT
+		COUNT(*)
+		FROM message
+		WHERE user_id=#{userId}
+	</select>
+	<select id="selectShopMessageListCount" resultType="int"
+		parameterType="int">
+		SELECT
+		COUNT(*)
+		FROM message
+		WHERE shop_id=#{shopId}
+	</select>
+	<insert id="insertMessage" parameterType="message">
+		INSERT INTO message(
+		user_id,
+		shop_id,
+		type,
+		content,
+		send_time,
+		)
+		VALUES(
+		#{userId},
+		#{shopId},
+		#{type},
+		#{content},
+		NOW()
+		)
+	</insert>
+</mapper>

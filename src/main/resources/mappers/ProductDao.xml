@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zdx.shop.dao.ProductDao">
+	<resultMap type="product" id="rsmap">
+		<id property="id" column="id" />
+		<result property="shopId" column="shop_id" />
+		<result property="productName" column="product_name" />
+		<result property="detail" column="detail" />
+		<result property="type" column="type" />
+		<result property="img1" column="img1" />
+		<result property="img2" column="img2" />
+		<result property="img3" column="img3" />
+		<result property="price" column="price" />
+		<result property="stock" column="stock" />
+		<result property="state" column="state" />
+		<result property="productCreateTime" column="product_create_time" />
+		<result property="productUpdateTime" column="product_update_time" />
+		<association property="shop" javaType="shop">
+			<result property="shopName" column="shop_name" />
+		</association>
+	</resultMap>
+	<sql id="column_list">
+		p.id id,shop_id,product_name,detail,type,img1,
+		img2,img3,price,stock,p.state state,shop_name
+	</sql>
+	<sql id="selectProductListWhere">
+		<where>
+			<if test="shopId!=null">
+				shop_id=#{shopId}
+			</if>
+			<if test="productName!=null">
+				and product_name like "%"#{productName}"%"
+			</if>
+			<if test="type!=null">
+				and type=#{type}
+			</if>
+			and p.state=0
+		</where>
+	</sql>
+	<select id="queryById" resultMap="rsmap" parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM product p
+		LEFT JOIN shop s ON
+		s.id=p.shop_id
+		WHERE p.id=#{id}
+	</select>
+	<select id="queryProductList" resultMap="rsmap" parameterType="product">
+		SELECT
+		<include refid="column_list"></include>
+		FROM product p
+		LEFT JOIN shop s ON
+		s.id=p.shop_id
+		<include refid="selectProductListWhere"></include>
+		ORDER BY p.product_create_time DESC
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	<select id="selectProductListCount" resultType="int"
+		parameterType="product">
+		SELECT
+		COUNT(*)
+		FROM product p
+		<include refid="selectProductListWhere"></include>
+	</select>
+	<insert id="insertProduct" parameterType="product">
+		INSERT INTO product(
+		shop_id,
+		product_name,
+		detail,
+		type,
+		img1,
+		img2,
+		img3,
+		price,
+		stock,
+		product_create_time,
+		product_update_time
+		)
+		VALUES(
+		#{shopId},
+		#{productName},
+		#{detail},
+		#{type},
+		#{img1},
+		#{img2},
+		#{img3},
+		#{price},
+		#{stock},
+		NOW(),
+		NOW()
+		)
+	</insert>
+	<update id="updateProduct" parameterType="product">
+		UPDATE product
+		<set>
+			<if test="productName!=null">
+				product_name=#{productName},
+			</if>
+			<if test="detail!=null">
+				detail=#{detail},
+			</if>
+			<if test="type!=null">
+				type=#{type},
+			</if>
+			<if test="img1!=null">
+				img1=#{img1},
+			</if>
+			<if test="img2!=null">
+				img2=#{img2},
+			</if>
+			<if test="img3!=null">
+				img3=#{img3},
+			</if>
+			<if test="price!=null">
+				price=#{price},
+			</if>
+			<if test="stock!=null">
+				stock=#{stock}
+			</if>
+		</set>
+		WHERE id=#{id}
+	</update>
+	<update id="updateProductStock" parameterType="int">
+		UPDATE product SET
+		stock=#{num}
+		WHERE id=#{productId}
+	</update>
+	<update id="reduceStock" parameterType="int">
+		UPDATE product SET
+		stock=stock-#{num}
+		WHERE
+		stock>=#{num} AND id=#{productId}
+	</update>
+	<update id="deleteProduct" parameterType="int">
+		UPDATE product SET
+		state=-1
+		WHERE id=#{id}
+	</update>
+</mapper>

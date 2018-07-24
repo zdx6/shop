@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zdx.shop.dao.OrdersDao">
+	<resultMap type="orders" id="rsmap">
+		<id property="id" column="id" />
+		<result property="userId" column="user_id" />
+		<result property="shopId" column="shop_id" />
+		<result property="productId" column="product_id" />
+		<result property="addressId" column="address_id" />
+		<result property="payment" column="payment" />
+		<result property="orderCreateTime" column="order_create_time" />
+		<result property="sendTime" column="send_time" />
+		<result property="endTime" column="end_time" />
+		<result property="state" column="state" />
+		<association property="product" javaType="product">
+			<result property="productName" column="product_name" />
+			<result property="img1" column="img1" />
+			<result property="price" column="price" />
+		</association>
+		<association property="user" javaType="user">
+			<result property="loginName" column="user_login_name" />
+			<result property="nickName" column="nick_name" />
+		</association>
+		<association property="shop" javaType="shop">
+			<result property="loginName" column="shop_login_name" />
+			<result property="shopName" column="shop_name" />
+		</association>
+		<association property="address" javaType="address">
+			<result property="receiverName" column="receiver_name"
+				jdbcType="VARCHAR" javaType="java.lang.String" />
+			<result property="phone" column="phone" />
+			<result property="address" column="address" />
+		</association>
+	</resultMap>
+	<sql id="column_list">
+		o.id id,o.user_id,o.shop_id,product_id,address_id,payment,
+		order_create_time,send_time,end_time,o.state,
+		p.product_name,img1,price,
+		u.login_name
+		user_login_name,nick_name,
+		s.login_name shop_login_name,shop_name,
+		receiver_name,a.phone,address
+	</sql>
+	<select id="queryById" resultMap="rsmap" parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM orders o
+		LEFT JOIN address a ON o.address_id=a.id
+		LEFT JOIN user u
+		ON o.user_id=u.id
+		LEFT JOIN shop s ON o.shop_id=s.id
+		LEFT JOIN product p
+		ON o.product_id=p.id
+		WHERE
+		o.id=#{orderId}
+	</select>
+	<select id="queryOrderListByShopId" resultMap="rsmap"
+		parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM orders o
+		LEFT JOIN address a ON o.address_id=a.id
+		LEFT JOIN user u
+		ON o.user_id=u.id
+		LEFT JOIN shop s ON o.shop_id=s.id
+		LEFT JOIN product p
+		ON o.product_id=p.id
+		WHERE
+		o.shop_id=#{shopId}
+		ORDER BY
+		o.order_create_time DESC
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	<select id="queryOrderListByUserId" resultMap="rsmap"
+		parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM orders o
+		LEFT JOIN address a ON o.address_id=a.id
+		LEFT JOIN user u
+		ON o.user_id=u.id
+		LEFT JOIN shop s ON o.shop_id=s.id
+		LEFT JOIN product p
+		ON o.product_id=p.id
+		WHERE
+		o.user_id=#{userId}
+		ORDER BY
+		o.order_create_time DESC
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+	<select id="selectOrderListByShopIdCount" resultType="int"
+		parameterType="int">
+		SELECT COUNT(*) FROM orders WHERE shop_id=#{shopId}
+	</select>
+	<select id="selectOrderListByUserIdCount" resultType="int"
+		parameterType="int">
+		SELECT COUNT(*) FROM orders WHERE user_id=#{userId}
+	</select>
+	<insert id="insertOrder" parameterType="orders">
+		INSERT INTO orders(
+		user_id,
+		shop_id,
+		product_id,
+		address_id,
+		payment,
+		order_create_time
+		)
+		VALUES(
+		#{userId},
+		#{shopId},
+		#{productId},
+		#{addressId},
+		#{payment},
+		NOW()
+		)
+	</insert>
+	<update id="updateSendTime" parameterType="int">
+		UPDATE orders SET
+		state=1,send_time=NOW()
+		WHERE id=#{orderId}
+		<!--state:0=订单未发货，1=订单发货，2=订单完成 -->
+	</update>
+	<update id="updateEndTime" parameterType="int">
+		UPDATE orders SET
+		state=2,end_time=NOW()
+		WHERE id=#{orderId}
+	</update>
+	<update id="deleteOrder" parameterType="int">
+		UPDATE orders SET
+		state=-1
+		WHERE id=#{orderId}
+	</update>
+</mapper>

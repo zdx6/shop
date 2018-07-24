@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zdx.shop.dao.AddressDao">
+	<resultMap type="address" id="rsmap">
+		<id property="id" column="id" />
+		<result property="userId" column="user_id" />
+		<result property="receiverName" column="receiver_name" />
+		<result property="phone" column="phone" />
+		<result property="address" column="address" />
+		<result property="addressCreateTime" column="address_create_time" />
+		<result property="addressUpdateTime" column="address_update_time" />
+		<result property="state" column="state" />
+		<association property="user" javaType="user">
+			<result property="loginName" column="login_name" />
+			<result property="nickName" column="nick_name" />
+		</association>
+	</resultMap>
+	<sql id="column_list">
+		id,user_id,receiver_name,phone,address
+	</sql>
+	<select id="queryById" resultMap="rsmap" parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM address
+		WHERE id=#{addressId}
+		and state=0
+	</select>
+	<select id="queryAddressListByUserId" resultMap="rsmap"
+		parameterType="int">
+		SELECT
+		<include refid="column_list"></include>
+		FROM address
+		WHERE user_id=#{userId}
+		and state=0
+	</select>
+	<select id="selectAddressListCount" resultType="int"
+		parameterType="int">
+		SELECT
+		COUNT(*)
+		FROM address
+		WHERE user_id=#{userId}
+		and state=0
+	</select>
+	<insert id="insertAddress" parameterType="address">
+		INSERT INTO address(
+		user_id,
+		receiver_name,
+		phone,
+		address,
+		address_create_time,
+		address_update_time
+		)
+		VALUES(
+		#{userId},
+		#{receiverName},
+		#{phone},
+		#{address},
+		NOW(),
+		NOW()
+		)
+	</insert>
+	<update id="updateAddress" parameterType="address">
+		UPDATE address
+		<set>
+			<if test="receiverName!=null">
+				receiver_name=#{receiverName},
+			</if>
+			<if test="phone!=null">
+				phone=#{phone},
+			</if>
+			<if test="address!=null">
+				address=#{address},
+			</if>
+			address_update_time=NOW()
+		</set>
+		WHERE id=#{id}
+	</update>
+	<update id="deleteAddress" parameterType="int">
+		UPDATE address SET
+		state=-1 WHERE id=#{id}
+	</update>
+</mapper>
